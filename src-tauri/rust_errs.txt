@@ -1,0 +1,240 @@
+﻿cargo :     Checking tauri-appcliptrim v0.1.0 
+(C:\Users\danie\Dev\rust\ProjectClipTrim\src-tauri)
+At line:1 char:1
++ cargo check 2>&1 | Out-File -Encoding utf8 -FilePath 
+rust_errs.txt
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Check 
+   ing ta...Trim\src-tauri):String) [], RemoteExcepti  
+  on
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+error: future cannot be sent between threads safely
+   --> src\commands.rs:160:1
+    |
+160 |   #[tauri::command]
+    |   ^^^^^^^^^^^^^^^^^ future returned by 
+`export_segments` is not `Send`
+    |
+   ::: src\lib.rs:121:25
+    |
+121 |           
+.invoke_handler(tauri::generate_handler![
+    |  _________________________-
+122 | |             commands::select_working_folder,
+123 | |             commands::scan_and_get_clips,
+124 | |             commands::open_clip,
+...   |
+133 | |             commands::test_ffmpeg
+134 | |         ])
+    | |_________- in this macro invocation
+    |
+    = help: within `impl std::future::Future<Output = 
+Result<(), std::string::String>>`, the trait `Send` is 
+not implemented for `std::sync::MutexGuard<'_, 
+std::option::Option<WorkingDirectory>>`
+note: future is not `Send` as this value is used 
+across an await
+   --> src\commands.rs:201:11
+    |
+162 |     let wd_guard = 
+state.work_dir.lock().unwrap();
+    |         -------- has type 
+`std::sync::MutexGuard<'_, 
+std::option::Option<WorkingDirectory>>` which is not 
+`Send`
+...
+201 |         ).await.map_err(|e| e.to_string())?;
+    |           ^^^^^ await occurs here, with 
+`wd_guard` maybe used later
+note: required by a bound in `ResultFutureTag::future`
+   --> C:\Users\danie\.cargo\registry\src\index.crates.
+io-1949cf8c6b5b557f\tauri-2.10.2\src\ipc\command.rs:314
+:42
+    |
+310 |     pub async fn future<T, E, F>(self, value: F) 
+-> Result<InvokeResponseBody, InvokeError>
+    |                  ------ required by a bound in 
+this associated function
+...
+314 |       F: Future<Output = Result<T, E>> + Send,
+    |                                          ^^^^ 
+required by this bound in `ResultFutureTag::future`
+    = note: this error originates in the macro 
+`commands::__cmd__export_segments` which comes from 
+the expansion of the macro `tauri::generate_handler` 
+(in Nightly builds, run with -Z macro-backtrace for 
+more info)
+
+error: future cannot be sent between threads safely
+   --> src\commands.rs:160:1
+    |
+160 |   #[tauri::command]
+    |   ^^^^^^^^^^^^^^^^^ future returned by 
+`export_segments` is not `Send`
+    |
+   ::: src\lib.rs:121:25
+    |
+121 |           
+.invoke_handler(tauri::generate_handler![
+    |  _________________________-
+122 | |             commands::select_working_folder,
+123 | |             commands::scan_and_get_clips,
+124 | |             commands::open_clip,
+...   |
+133 | |             commands::test_ffmpeg
+134 | |         ])
+    | |_________- in this macro invocation
+    |
+    = help: within `impl std::future::Future<Output = 
+Result<(), std::string::String>>`, the trait `Send` is 
+not implemented for `std::sync::MutexGuard<'_, 
+std::option::Option<Connection>>`
+note: future is not `Send` as this value is used 
+across an await
+   --> src\commands.rs:201:11
+    |
+165 |     let db_guard = state.db.lock().unwrap();
+    |         -------- has type 
+`std::sync::MutexGuard<'_, 
+std::option::Option<Connection>>` which is not `Send`
+...
+201 |         ).await.map_err(|e| e.to_string())?;
+    |           ^^^^^ await occurs here, with 
+`db_guard` maybe used later
+note: required by a bound in `ResultFutureTag::future`
+   --> C:\Users\danie\.cargo\registry\src\index.crates.
+io-1949cf8c6b5b557f\tauri-2.10.2\src\ipc\command.rs:314
+:42
+    |
+310 |     pub async fn future<T, E, F>(self, value: F) 
+-> Result<InvokeResponseBody, InvokeError>
+    |                  ------ required by a bound in 
+this associated function
+...
+314 |       F: Future<Output = Result<T, E>> + Send,
+    |                                          ^^^^ 
+required by this bound in `ResultFutureTag::future`
+    = note: this error originates in the macro 
+`commands::__cmd__export_segments` which comes from 
+the expansion of the macro `tauri::generate_handler` 
+(in Nightly builds, run with -Z macro-backtrace for 
+more info)
+
+error: future cannot be sent between threads safely
+   --> src\commands.rs:160:1
+    |
+160 |   #[tauri::command]
+    |   ^^^^^^^^^^^^^^^^^ future returned by 
+`export_segments` is not `Send`
+    |
+   ::: src\lib.rs:121:25
+    |
+121 |           
+.invoke_handler(tauri::generate_handler![
+    |  _________________________-
+122 | |             commands::select_working_folder,
+123 | |             commands::scan_and_get_clips,
+124 | |             commands::open_clip,
+...   |
+133 | |             commands::test_ffmpeg
+134 | |         ])
+    | |_________- in this macro invocation
+    |
+    = help: within `Connection`, the trait `Sync` is 
+not implemented for 
+`RefCell<rusqlite::inner_connection::InnerConnection>`
+    = note: if you want to do aliasing and mutation 
+between multiple threads, use `std::sync::RwLock` 
+instead
+note: future is not `Send` as this value is used 
+across an await
+   --> src\commands.rs:201:11
+    |
+166 |     let conn = db_guard.as_ref().ok_or("DB not 
+initialized")?;
+    |         ---- has type `&Connection` which is not 
+`Send`
+...
+201 |         ).await.map_err(|e| e.to_string())?;
+    |           ^^^^^ await occurs here, with `conn` 
+maybe used later
+note: required by a bound in `ResultFutureTag::future`
+   --> C:\Users\danie\.cargo\registry\src\index.crates.
+io-1949cf8c6b5b557f\tauri-2.10.2\src\ipc\command.rs:314
+:42
+    |
+310 |     pub async fn future<T, E, F>(self, value: F) 
+-> Result<InvokeResponseBody, InvokeError>
+    |                  ------ required by a bound in 
+this associated function
+...
+314 |       F: Future<Output = Result<T, E>> + Send,
+    |                                          ^^^^ 
+required by this bound in `ResultFutureTag::future`
+    = note: this error originates in the macro 
+`commands::__cmd__export_segments` which comes from 
+the expansion of the macro `tauri::generate_handler` 
+(in Nightly builds, run with -Z macro-backtrace for 
+more info)
+
+error: future cannot be sent between threads safely
+   --> src\commands.rs:160:1
+    |
+160 |   #[tauri::command]
+    |   ^^^^^^^^^^^^^^^^^ future returned by 
+`export_segments` is not `Send`
+    |
+   ::: src\lib.rs:121:25
+    |
+121 |           
+.invoke_handler(tauri::generate_handler![
+    |  _________________________-
+122 | |             commands::select_working_folder,
+123 | |             commands::scan_and_get_clips,
+124 | |             commands::open_clip,
+...   |
+133 | |             commands::test_ffmpeg
+134 | |         ])
+    | |_________- in this macro invocation
+    |
+    = help: within `Connection`, the trait `Sync` is 
+not implemented for 
+`RefCell<hashlink::lru_cache::LruCache<Arc<str>, 
+rusqlite::raw_statement::RawStatement>>`
+    = note: if you want to do aliasing and mutation 
+between multiple threads, use `std::sync::RwLock` 
+instead
+note: future is not `Send` as this value is used 
+across an await
+   --> src\commands.rs:201:11
+    |
+166 |     let conn = db_guard.as_ref().ok_or("DB not 
+initialized")?;
+    |         ---- has type `&Connection` which is not 
+`Send`
+...
+201 |         ).await.map_err(|e| e.to_string())?;
+    |           ^^^^^ await occurs here, with `conn` 
+maybe used later
+note: required by a bound in `ResultFutureTag::future`
+   --> C:\Users\danie\.cargo\registry\src\index.crates.
+io-1949cf8c6b5b557f\tauri-2.10.2\src\ipc\command.rs:314
+:42
+    |
+310 |     pub async fn future<T, E, F>(self, value: F) 
+-> Result<InvokeResponseBody, InvokeError>
+    |                  ------ required by a bound in 
+this associated function
+...
+314 |       F: Future<Output = Result<T, E>> + Send,
+    |                                          ^^^^ 
+required by this bound in `ResultFutureTag::future`
+    = note: this error originates in the macro 
+`commands::__cmd__export_segments` which comes from 
+the expansion of the macro `tauri::generate_handler` 
+(in Nightly builds, run with -Z macro-backtrace for 
+more info)
+
+error: could not compile `tauri-appcliptrim` (lib) due 
+to 8 previous errors

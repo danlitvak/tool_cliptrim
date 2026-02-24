@@ -55,7 +55,7 @@ ClipTrim operates completely non-destructively:
 
 ---
 
-## Keyboard Shortcuts
+## Customizable Keyboard Shortcuts
 
 The player interface is completely keyboard-driven:
 

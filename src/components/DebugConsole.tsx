@@ -98,7 +98,7 @@ export function DebugConsole({ isOpen, onClose }: DebugConsoleProps) {
             />
             <div className="flex items-center justify-between px-4 py-1.5 bg-[#252526] border-b border-[#3d3d3d] text-zinc-300">
                 <div className="flex items-center gap-2">
-                    <Terminal size={14} className="text-[#007fd4]" />
+                    <Terminal size={14} className="text-zinc-400" />
                     <span className="font-semibold tracking-wide uppercase">Debug Console</span>
                     <span className="ml-2 px-2 py-0.5 bg-[#1e1e1e] rounded-full text-[10px]">{logs.length}</span>
                 </div>

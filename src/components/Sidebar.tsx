@@ -15,7 +15,7 @@ type SortOrder = 'date_asc' | 'date_desc' | 'name_asc' | 'name_desc' | 'status';
 
 export function Sidebar({ clips, activeClipId, onSelectClip, onSelectFolder, workingFolder }: SidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('date_desc');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('status');
 
     const [sortMenuOpen, setSortMenuOpen] = useState(false);
 
@@ -118,7 +118,7 @@ export function Sidebar({ clips, activeClipId, onSelectClip, onSelectFolder, wor
                         <Search size={14} className="absolute left-2 text-zinc-500" />
                         <input
                             type="text"
-                            placeholder="Find..."
+                            placeholder={`Find... (${clips.length} clips)`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-[#1e1e1e] border border-[#3d3d3d] rounded pl-7 pr-2 py-1 text-xs text-zinc-300 focus:outline-none focus:border-[#007fd4] transition-colors placeholder:text-zinc-600 font-sans"

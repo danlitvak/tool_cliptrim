@@ -14,11 +14,12 @@ interface TimelineProps {
     playbackRate?: number;
     onVolumeChange?: (volume: number) => void;
     onMuteChange?: (isMuted: boolean) => void;
+    isEditMode: boolean;
 }
 
 export function Timeline({
     durationMs, currentTimeMs, inMarker, outMarker, segments, onSeek,
-    volume = 1, isMuted = false, playbackRate = 1, onVolumeChange, onMuteChange
+    volume = 1, isMuted = false, playbackRate = 1, onVolumeChange, onMuteChange, isEditMode
 }: TimelineProps) {
     const [zoomLevel, setZoomLevel] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -88,7 +89,7 @@ export function Timeline({
     return (
         <div className="flex flex-col bg-[#1e1e1e] border-t border-[#3d3d3d] select-none h-full w-full shadow-[0_-4px_10px_rgba(0,0,0,0.3)] z-40 relative">
             {/* Timeline Toolbar */}
-            <div className="flex items-center justify-between px-3 py-1 bg-[#252526] border-b border-[#3d3d3d]">
+            <div className="flex items-center justify-between px-3 py-1 bg-[#252526] border-b border-[#3d3d3d] relative">
                 <div className="flex items-center gap-4">
                     {/* Audio Controls */}
                     {onVolumeChange && onMuteChange && (
@@ -126,6 +127,13 @@ export function Timeline({
                     </div>
                 </div>
 
+                {/* Edit Mode Indicator */}
+                {isEditMode && (
+                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-0.5 bg-red-500/20 border border-red-500/50 rounded text-red-400 text-xs font-bold tracking-widest pointer-events-none">
+                        EDIT MODE
+                    </div>
+                )}
+
                 {/* Zoom Controls */}
                 <div className="flex items-center gap-1">
                     <button
@@ -158,8 +166,12 @@ export function Timeline({
             {/* Scrollable Timeline Area */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-x-auto overflow-y-hidden relative group cursor-grab active:cursor-grabbing"
+                className={`flex-1 overflow-x-auto overflow-y-hidden relative group ${isEditMode ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
                 onMouseDown={(e) => {
+                    if (isEditMode) {
+                        e.preventDefault();
+                        return;
+                    }
                     // Pan on middle click, right click, or modifier + left click
                     if (e.button === 1 || e.button === 2 || e.altKey || e.shiftKey || e.ctrlKey) {
                         e.preventDefault();
@@ -184,9 +196,13 @@ export function Timeline({
             >
                 {/* Inner Track */}
                 <div
-                    className="relative h-full bg-[#2a2a2b] cursor-pointer group-hover:bg-[#2d2d2e] transition-colors"
+                    className={`relative h-full transition-colors ${isEditMode ? 'bg-[#5a2e2e] opacity-80' : 'bg-[#2a2a2b] cursor-pointer group-hover:bg-[#2d2d2e]'}`}
                     style={{ width: `${zoomLevel * 100}%`, minWidth: '100%' }}
                     onMouseDown={(e) => {
+                        if (isEditMode) {
+                            e.preventDefault(); // Cannot seek in Edit Mode
+                            return;
+                        }
                         // Handle clicking to seek, or middle-click to pan
                         if (e.button === 1 || e.button === 2 || e.altKey || e.shiftKey || e.ctrlKey) {
                             return; // Let the outer container handle pan start
@@ -196,6 +212,11 @@ export function Timeline({
                         onSeek(percent * durationMs);
                     }}
                 >
+                    {/* Edit Mode Banner overlay */}
+                    {isEditMode && (
+                        <div className="absolute inset-x-0 inset-y-0 opacity-10 pointer-events-none flex items-center justify-center overflow-hidden" style={{ backgroundImage: 'linear-gradient(45deg, #ff4c4c 25%, transparent 25%, transparent 50%, #ff4c4c 50%, #ff4c4c 75%, transparent 75%, transparent)', backgroundSize: '40px 40px' }} />
+                    )}
+
                     {/* Time Ticks Background (visual only) & Labels */}
                     <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
                         {durationMs > 0 && (() => {

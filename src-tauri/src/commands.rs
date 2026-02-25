@@ -100,8 +100,8 @@ pub fn get_segments(clip_id: String, state: State<'_, AppState>) -> Result<Vec<S
 #[tauri::command]
 pub fn add_segment(
     clip_id: String,
-    start_ms: i64,
-    end_ms: i64,
+    start_ms: f64,
+    end_ms: f64,
     state: State<'_, AppState>
 ) -> Result<Segment, String> {
     let db_guard = state.db.lock().unwrap();
@@ -114,8 +114,8 @@ pub fn add_segment(
         id: Uuid::new_v4().to_string(),
         clip_id,
         idx,
-        start_ms,
-        end_ms,
+        start_ms: start_ms.round() as i64,
+        end_ms: end_ms.round() as i64,
         label: None,
     };
     
@@ -140,10 +140,10 @@ pub fn update_segment_label(segment_id: String, label: String, state: State<'_, 
 }
 
 #[tauri::command]
-pub fn update_segment_bounds(segment_id: String, start_ms: i64, end_ms: i64, state: State<'_, AppState>) -> Result<(), String> {
+pub fn update_segment_bounds(segment_id: String, start_ms: f64, end_ms: f64, state: State<'_, AppState>) -> Result<(), String> {
     let db_guard = state.db.lock().unwrap();
     let conn = db_guard.as_ref().ok_or("DB not initialized")?;
-    conn.execute("UPDATE segments SET start_ms = ?1, end_ms = ?2 WHERE id = ?3", rusqlite::params![start_ms, end_ms, segment_id]).map_err(|e| e.to_string())?;
+    conn.execute("UPDATE segments SET start_ms = ?1, end_ms = ?2 WHERE id = ?3", rusqlite::params![start_ms.round() as i64, end_ms.round() as i64, segment_id]).map_err(|e| e.to_string())?;
     Ok(())
 }
 

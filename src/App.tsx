@@ -15,6 +15,8 @@ import { LoadingOverlay } from "./components/LoadingOverlay";
 import { JobsPanel } from "./components/JobsPanel";
 import { Clip, Segment, VideoInfo } from "./types";
 
+export type EditMarkerTarget = 'in' | 'out' | { type: 'segmentIn' | 'segmentOut', segmentId: string };
+
 export function App() {
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [clips, setClips] = useState<Clip[]>([]);
@@ -34,6 +36,10 @@ export function App() {
   const [inMarker, setInMarker] = useState<number | null>(null);
   const [outMarker, setOutMarker] = useState<number | null>(null);
   const [fps, setFps] = useState(30);
+
+  // Edit Mode State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [activeEditMarker, setActiveEditMarker] = useState<EditMarkerTarget | null>(null);
 
   // Toast State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -118,10 +124,12 @@ export function App() {
       const segs = await invoke<Segment[]>("get_segments", { clipId: id });
       setSegments(segs);
 
-      // Reset markers
+      // Reset markers and edit mode
       setInMarker(null);
       setOutMarker(null);
       setCurrentTimeMs(0);
+      setIsEditMode(false);
+      setActiveEditMarker(null);
 
       // Get Info
       try {
@@ -239,6 +247,37 @@ export function App() {
     }
   };
 
+  const handleUpdateEditMarker = async (target: EditMarkerTarget, newTimeMs: number) => {
+    const timeMsInt = Math.floor(newTimeMs);
+    if (target === 'in') {
+      setInMarker(timeMsInt);
+    } else if (target === 'out') {
+      setOutMarker(timeMsInt);
+    } else if (typeof target === 'object') {
+      const segToUpdate = segments.find(s => s.id === target.segmentId);
+      if (!segToUpdate) return;
+
+      let { start_ms, end_ms } = segToUpdate;
+      if (target.type === 'segmentIn') {
+        start_ms = Math.min(timeMsInt, end_ms - 1); // Ensure start is before end
+      } else {
+        end_ms = Math.max(timeMsInt, start_ms + 1);
+      }
+
+      try {
+        const updatedSeg = await invoke<Segment>("update_segment_bounds", {
+          segmentId: target.segmentId,
+          startMs: Math.floor(start_ms),
+          endMs: Math.floor(end_ms)
+        });
+        setSegments(prev => prev.map(s => s.id === updatedSeg.id ? updatedSeg : s));
+      } catch (e) {
+        console.error("Failed to update segment bounds via nudge", e);
+        addToast("Failed to update segment bounds: " + e, "error");
+      }
+    }
+  };
+
   const handleSeek = (timeMs: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime = timeMs / 1000;
@@ -336,6 +375,14 @@ export function App() {
                   playbackRate={playbackRate}
                   setPlaybackRate={setPlaybackRate}
                   keybinds={settings.keybinds}
+                  isEditMode={isEditMode}
+                  setIsEditMode={setIsEditMode}
+                  activeEditMarker={activeEditMarker}
+                  setActiveEditMarker={setActiveEditMarker}
+                  onUpdateEditMarker={handleUpdateEditMarker}
+                  segments={segments}
+                  inMarker={inMarker}
+                  outMarker={outMarker}
                 />
               </Panel>
 
@@ -359,6 +406,7 @@ export function App() {
                       playbackRate={playbackRate}
                       onVolumeChange={handleVolumeChange}
                       onMuteChange={handleMuteChange}
+                      isEditMode={isEditMode}
                     />
                   </Panel>
                 </>

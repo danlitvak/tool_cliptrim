@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { addLog } from './DebugConsole';
+import { Segment } from '../types';
+import { EditMarkerTarget } from '../App';
 
 interface VideoPlayerProps {
     videoUrl: string | null;
@@ -28,6 +30,7 @@ interface VideoPlayerProps {
         export: string;
         nextClip: string;
         prevClip: string;
+        toggleEditMode: string;
         scrubForward: string;
         scrubBackward: string;
         stepForward: string;
@@ -35,6 +38,14 @@ interface VideoPlayerProps {
         speedUp: string;
         speedDown: string;
     };
+    isEditMode: boolean;
+    setIsEditMode: (mode: boolean) => void;
+    activeEditMarker: EditMarkerTarget | null;
+    setActiveEditMarker: (target: EditMarkerTarget | null) => void;
+    onUpdateEditMarker: (target: EditMarkerTarget, timeMs: number) => void;
+    segments: Segment[];
+    inMarker: number | null;
+    outMarker: number | null;
 }
 
 export function VideoPlayer({
@@ -55,7 +66,15 @@ export function VideoPlayer({
     isMuted,
     playbackRate,
     setPlaybackRate,
-    keybinds
+    keybinds,
+    isEditMode,
+    setIsEditMode,
+    activeEditMarker,
+    setActiveEditMarker,
+    onUpdateEditMarker,
+    segments,
+    inMarker,
+    outMarker
 }: VideoPlayerProps) {
 
     // Apply volume changes
@@ -86,6 +105,14 @@ export function VideoPlayer({
         fps,
         scrubDuration,
         keybinds,
+        isEditMode,
+        setIsEditMode,
+        activeEditMarker,
+        setActiveEditMarker,
+        onUpdateEditMarker,
+        segments,
+        inMarker,
+        outMarker,
     });
 
     useEffect(() => {
@@ -100,6 +127,14 @@ export function VideoPlayer({
             fps,
             scrubDuration,
             keybinds,
+            isEditMode,
+            setIsEditMode,
+            activeEditMarker,
+            setActiveEditMarker,
+            onUpdateEditMarker,
+            segments,
+            inMarker,
+            outMarker,
         };
     });
 
@@ -148,16 +183,61 @@ export function VideoPlayer({
                     e.preventDefault();
                     callbacksRef.current.onPrevClip();
                     break;
+                case kb.toggleEditMode:
+                    e.preventDefault();
+                    const newMode = !callbacksRef.current.isEditMode;
+                    callbacksRef.current.setIsEditMode(newMode);
+                    if (newMode) {
+                        callbacksRef.current.setActiveEditMarker(null);
+                        addLog('info', 'Entered Edit Mode: Cannot seek with mouse. Scrub to a marker to nudge it.');
+                    } else {
+                        addLog('info', 'Exited Edit Mode.');
+                    }
+                    break;
                 case kb.scrubForward:
                     e.preventDefault();
-                    if (Number.isFinite(video.duration)) {
-                        video.currentTime = Math.min(video.duration, video.currentTime + callbacksRef.current.scrubDuration);
+                    if (callbacksRef.current.isEditMode) {
+                        const allMarkers = getAllMarkers(
+                            callbacksRef.current.inMarker,
+                            callbacksRef.current.outMarker,
+                            callbacksRef.current.segments
+                        );
+                        if (allMarkers.length === 0) return;
+
+                        const currentMs = video.currentTime * 1000;
+                        const nextMarker = allMarkers.find(m => m.timeMs > currentMs + 10); // +10ms buffer to float inaccuracies
+                        if (nextMarker) {
+                            video.currentTime = nextMarker.timeMs / 1000;
+                            callbacksRef.current.setActiveEditMarker(nextMarker.target);
+                            addLog('info', `Edit Mode: Selected next marker at ${nextMarker.timeMs}ms`);
+                        }
+                    } else {
+                        if (Number.isFinite(video.duration)) {
+                            video.currentTime = Math.min(video.duration, video.currentTime + callbacksRef.current.scrubDuration);
+                        }
                     }
                     break;
                 case kb.scrubBackward:
                     e.preventDefault();
-                    if (Number.isFinite(video.duration)) {
-                        video.currentTime = Math.max(0, video.currentTime - callbacksRef.current.scrubDuration);
+                    if (callbacksRef.current.isEditMode) {
+                        const allMarkers = getAllMarkers(
+                            callbacksRef.current.inMarker,
+                            callbacksRef.current.outMarker,
+                            callbacksRef.current.segments
+                        );
+                        if (allMarkers.length === 0) return;
+
+                        const currentMs = video.currentTime * 1000;
+                        const prevMarker = [...allMarkers].reverse().find(m => m.timeMs < currentMs - 10);
+                        if (prevMarker) {
+                            video.currentTime = prevMarker.timeMs / 1000;
+                            callbacksRef.current.setActiveEditMarker(prevMarker.target);
+                            addLog('info', `Edit Mode: Selected previous marker at ${prevMarker.timeMs}ms`);
+                        }
+                    } else {
+                        if (Number.isFinite(video.duration)) {
+                            video.currentTime = Math.max(0, video.currentTime - callbacksRef.current.scrubDuration);
+                        }
                     }
                     break;
                 case kb.speedUp:
@@ -177,7 +257,12 @@ export function VideoPlayer({
                         return;
                     }
                     video.pause();
-                    video.currentTime = Math.max(0, video.currentTime - (1 / (callbacksRef.current.fps || 30)));
+                    const newTimeBack = Math.max(0, video.currentTime - (1 / (callbacksRef.current.fps || 30)));
+                    video.currentTime = newTimeBack;
+
+                    if (callbacksRef.current.isEditMode && callbacksRef.current.activeEditMarker) {
+                        callbacksRef.current.onUpdateEditMarker(callbacksRef.current.activeEditMarker, newTimeBack * 1000);
+                    }
                     break;
                 case kb.stepForward:
                     e.preventDefault();
@@ -186,7 +271,12 @@ export function VideoPlayer({
                         return;
                     }
                     video.pause();
-                    video.currentTime = Math.min(video.duration, video.currentTime + (1 / (callbacksRef.current.fps || 30)));
+                    const newTimeFwd = Math.min(video.duration, video.currentTime + (1 / (callbacksRef.current.fps || 30)));
+                    video.currentTime = newTimeFwd;
+
+                    if (callbacksRef.current.isEditMode && callbacksRef.current.activeEditMarker) {
+                        callbacksRef.current.onUpdateEditMarker(callbacksRef.current.activeEditMarker, newTimeFwd * 1000);
+                    }
                     break;
             }
         };
@@ -194,6 +284,18 @@ export function VideoPlayer({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [videoRef]); // We only re-bind if the videoRef changes, capturing callbacks via ref
+
+    // Helper function to extract all valid targetable markers in ascending time order
+    const getAllMarkers = (inM: number | null, outM: number | null, segs: Segment[]): { timeMs: number, target: EditMarkerTarget }[] => {
+        const markers: { timeMs: number, target: EditMarkerTarget }[] = [];
+        if (inM !== null) markers.push({ timeMs: inM, target: 'in' });
+        if (outM !== null) markers.push({ timeMs: outM, target: 'out' });
+        segs.forEach(s => {
+            markers.push({ timeMs: s.start_ms, target: { type: 'segmentIn', segmentId: s.id } });
+            markers.push({ timeMs: s.end_ms, target: { type: 'segmentOut', segmentId: s.id } });
+        });
+        return markers.sort((a, b) => a.timeMs - b.timeMs);
+    };
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center bg-black relative overflow-hidden border-b border-[#2d2d2d]">

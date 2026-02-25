@@ -10,6 +10,7 @@ export interface Keybinds {
     export: string;
     nextClip: string;
     prevClip: string;
+    toggleEditMode: string;
     scrubForward: string;
     scrubBackward: string;
     stepForward: string;
@@ -39,6 +40,7 @@ export const defaultSettings: AppSettings = {
         export: 'enter',
         nextClip: 'n',
         prevClip: 'p',
+        toggleEditMode: 'e',
         scrubForward: 'arrowright',
         scrubBackward: 'arrowleft',
         stepForward: '.',
@@ -203,6 +205,7 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
                                             'export': 'Export Segments',
                                             'nextClip': 'Next Clip',
                                             'prevClip': 'Previous Clip',
+                                            'toggleEditMode': 'Toggle Edit Mode',
                                             'scrubForward': 'Scrub Forward',
                                             'scrubBackward': 'Scrub Backward',
                                             'stepForward': 'Step Frame Forward',

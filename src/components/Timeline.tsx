@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Segment } from '../types';
 import { ZoomIn, ZoomOut, Maximize, VolumeX, Volume2 } from 'lucide-react';
 
@@ -22,23 +22,53 @@ export function Timeline({
 }: TimelineProps) {
     const [zoomLevel, setZoomLevel] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
+    const prevZoomRef = useRef(1);
+    const isPanning = useRef(false);
+    const panStart = useRef({ x: 0, scrollLeft: 0 });
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isPanning.current || !containerRef.current) return;
+            e.preventDefault();
+            const dx = e.clientX - panStart.current.x;
+            containerRef.current.scrollLeft = panStart.current.scrollLeft - dx;
+        };
+
+        const handleMouseUp = () => {
+            if (isPanning.current) {
+                isPanning.current = false;
+                document.body.style.cursor = '';
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove, { passive: false });
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
 
     // Keep playhead in view when it moves, if it goes out of bounds
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!containerRef.current || durationMs <= 0) return;
         const container = containerRef.current;
         const playheadPercent = currentTimeMs / durationMs;
         const playheadPixelX = playheadPercent * (container.scrollWidth);
-
-        const scrollLeft = container.scrollLeft;
         const clientWidth = container.clientWidth;
 
-        // If playhead is outside the visible area, scroll to it
+        if (prevZoomRef.current !== zoomLevel) {
+            // Zoom changed! Keep playhead focused by centering it exactly synchronously
+            container.scrollLeft = Math.max(0, playheadPixelX - clientWidth / 2);
+            prevZoomRef.current = zoomLevel;
+            return;
+        }
+
+        const scrollLeft = container.scrollLeft;
+
+        // If playhead is outside the visible area, instantly update it to center to avoid smoothing jitter
         if (playheadPixelX < scrollLeft || playheadPixelX > scrollLeft + clientWidth) {
-            container.scrollTo({
-                left: Math.max(0, playheadPixelX - clientWidth / 2),
-                behavior: 'smooth'
-            });
+            container.scrollLeft = Math.max(0, playheadPixelX - clientWidth / 2);
         }
     }, [currentTimeMs, durationMs, zoomLevel]);
     const getPositionStyle = (timeMs: number) => {
@@ -106,21 +136,21 @@ export function Timeline({
                         <Maximize size={14} />
                     </button>
                     <button
-                        onClick={() => setZoomLevel(prev => Math.max(1, prev - 1))}
+                        onClick={() => setZoomLevel(prev => Math.max(1, prev / 1.5))}
                         className="p-1 hover:bg-[#3d3d3d] text-zinc-400 hover:text-zinc-100 rounded transition-colors"
                         title="Zoom Out"
                         disabled={zoomLevel <= 1}
                     >
                         <ZoomOut size={14} className={zoomLevel <= 1 ? "opacity-50" : ""} />
                     </button>
-                    <span className="text-[11px] font-mono text-zinc-400 w-8 text-center">{zoomLevel}x</span>
+                    <span className="text-[11px] font-mono text-zinc-400 w-8 text-center">{zoomLevel < 10 ? zoomLevel.toFixed(1) : Math.round(zoomLevel)}x</span>
                     <button
-                        onClick={() => setZoomLevel(prev => Math.min(20, prev + 1))}
+                        onClick={() => setZoomLevel(prev => Math.min(100, prev * 1.5))}
                         className="p-1 hover:bg-[#3d3d3d] text-zinc-400 hover:text-zinc-100 rounded transition-colors"
                         title="Zoom In"
-                        disabled={zoomLevel >= 20}
+                        disabled={zoomLevel >= 100}
                     >
-                        <ZoomIn size={14} className={zoomLevel >= 20 ? "opacity-50" : ""} />
+                        <ZoomIn size={14} className={zoomLevel >= 100 ? "opacity-50" : ""} />
                     </button>
                 </div>
             </div>
@@ -128,15 +158,27 @@ export function Timeline({
             {/* Scrollable Timeline Area */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-x-auto overflow-y-hidden relative group"
+                className="flex-1 overflow-x-auto overflow-y-hidden relative group cursor-grab active:cursor-grabbing"
+                onMouseDown={(e) => {
+                    // Pan on middle click, right click, or modifier + left click
+                    if (e.button === 1 || e.button === 2 || e.altKey || e.shiftKey || e.ctrlKey) {
+                        e.preventDefault();
+                        isPanning.current = true;
+                        if (containerRef.current) {
+                            panStart.current = {
+                                x: e.clientX,
+                                scrollLeft: containerRef.current.scrollLeft
+                            };
+                        }
+                        document.body.style.cursor = 'grabbing';
+                    }
+                }}
+                onContextMenu={(e) => e.preventDefault()}
                 onWheel={(e) => {
                     if (e.deltaY !== 0) {
                         e.preventDefault();
-                        if (e.deltaY < 0) {
-                            setZoomLevel(prev => Math.min(20, prev + 1));
-                        } else {
-                            setZoomLevel(prev => Math.max(1, prev - 1));
-                        }
+                        const zoomFactor = Math.pow(1.002, -e.deltaY);
+                        setZoomLevel(prev => Math.max(1, Math.min(100, prev * zoomFactor)));
                     }
                 }}
             >
@@ -146,10 +188,8 @@ export function Timeline({
                     style={{ width: `${zoomLevel * 100}%`, minWidth: '100%' }}
                     onMouseDown={(e) => {
                         // Handle clicking to seek, or middle-click to pan
-                        if (e.button === 1 || e.button === 2) {
-                            // Middle or right click down = initiate pan? Native browser usually handles middle click.
-                            // Let's just allow the container to be dragged for panning later if needed.
-                            return;
+                        if (e.button === 1 || e.button === 2 || e.altKey || e.shiftKey || e.ctrlKey) {
+                            return; // Let the outer container handle pan start
                         }
                         const rect = e.currentTarget.getBoundingClientRect();
                         const percent = (e.clientX - rect.left) / rect.width;
@@ -157,20 +197,38 @@ export function Timeline({
                     }}
                 >
                     {/* Time Ticks Background (visual only) & Labels */}
-                    <div className="absolute inset-0 pointer-events-none z-10 flex">
-                        {durationMs > 0 && Array.from({ length: 10 * zoomLevel }).map((_, i) => {
-                            const timeMs = (durationMs / (10 * zoomLevel)) * i;
-                            const sec = timeMs / 1000;
-                            // Format cleanly based on decimal necessity
-                            const label = sec % 1 === 0 ? sec.toFixed(0) : sec.toFixed(2);
-                            return (
-                                <div key={i} className="flex-1 border-l border-[#3d3d3d]/50 h-full relative box-border">
-                                    <span className="absolute left-1 top-0.5 text-[10px] text-zinc-500/80 font-mono select-none">
-                                        {label}s
-                                    </span>
-                                </div>
-                            );
-                        })}
+                    <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                        {durationMs > 0 && (() => {
+                            const totalSecs = durationMs / 1000;
+                            const visibleSecs = totalSecs / zoomLevel;
+                            const idealInterval = visibleSecs / 10;
+
+                            let intervalSecs = 1;
+                            if (idealInterval > 300) intervalSecs = 300;
+                            else if (idealInterval > 60) intervalSecs = 60;
+                            else if (idealInterval > 30) intervalSecs = 30;
+                            else if (idealInterval > 10) intervalSecs = 10;
+                            else if (idealInterval > 5) intervalSecs = 5;
+                            else if (idealInterval > 2) intervalSecs = 2;
+                            else if (idealInterval > 1) intervalSecs = 1;
+                            else if (idealInterval > 0.5) intervalSecs = 0.5;
+                            else if (idealInterval > 0.2) intervalSecs = 0.2;
+                            else intervalSecs = 0.1;
+
+                            const ticks = [];
+                            for (let s = 0; s <= totalSecs; s += intervalSecs) {
+                                const percent = (s / totalSecs) * 100;
+                                const label = s % 1 === 0 ? s.toFixed(0) : (intervalSecs < 0.1 ? s.toFixed(2) : s.toFixed(1));
+                                ticks.push(
+                                    <div key={s} className="absolute top-0 bottom-0 border-l border-[#3d3d3d]/50" style={{ left: `${percent}%` }}>
+                                        <span className="absolute left-1 top-0.5 text-[10px] text-zinc-500/80 font-mono select-none">
+                                            {label}s
+                                        </span>
+                                    </div>
+                                );
+                            }
+                            return ticks;
+                        })()}
                     </div>
                     {/* Segments Layer */}
                     {segments.map((seg) => (

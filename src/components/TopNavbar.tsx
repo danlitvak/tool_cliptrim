@@ -1,10 +1,11 @@
 interface TopNavbarProps {
     onToggleDebug: () => void;
     onOpenSettings: () => void;
+    onOpenAbout: () => void;
     isDebugOpen: boolean;
 }
 
-export function TopNavbar({ onToggleDebug, onOpenSettings, isDebugOpen }: TopNavbarProps) {
+export function TopNavbar({ onToggleDebug, onOpenSettings, onOpenAbout, isDebugOpen }: TopNavbarProps) {
     return (
         <div className="h-9 w-full bg-[#181818] border-b border-[#2d2d2d] flex items-center justify-between px-3 select-none flex-shrink-0 z-50">
             {/* Left side: Logo & Menus */}
@@ -29,6 +30,13 @@ export function TopNavbar({ onToggleDebug, onOpenSettings, isDebugOpen }: TopNav
                         title="Open Settings"
                     >
                         <span>Settings</span>
+                    </button>
+                    <button
+                        onClick={onOpenAbout}
+                        className="px-3 h-full text-[11px] transition-colors hover:bg-[#2d2d2d] text-zinc-400 flex items-center"
+                        title="About ClipTrim"
+                    >
+                        <span>About</span>
                     </button>
                 </div>
             </div>

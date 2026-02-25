@@ -9,6 +9,7 @@ import { Timeline } from "./components/Timeline";
 import { TopNavbar } from "./components/TopNavbar";
 import { DebugConsole, addLog } from "./components/DebugConsole";
 import { SettingsModal, AppSettings, defaultSettings } from "./components/SettingsModal";
+import { AboutModal } from "./components/AboutModal";
 import { ToastContainer, ToastMessage } from "./components/Toast";
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { JobsPanel } from "./components/JobsPanel";
@@ -46,6 +47,7 @@ export function App() {
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [settingsChanged, setSettingsChanged] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('clipTrimSettings');
@@ -293,6 +295,7 @@ export function App() {
           addToast(`Debug console ${newState ? 'opened' : 'closed'}`, 'info');
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
         isDebugOpen={isDebugOpen}
       />
       <div className="flex-1 w-full h-full overflow-hidden relative border-t border-zinc-800">
@@ -402,6 +405,11 @@ export function App() {
         }}
         settings={settings}
         onSettingsChange={handleSettingsChange}
+      />
+
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
       />
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />

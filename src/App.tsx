@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
@@ -40,9 +40,9 @@ export function App() {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
   };
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  }, []);
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -287,7 +287,11 @@ export function App() {
   return (
     <div className="h-screen w-screen bg-[#1e1e1e] text-zinc-300 overflow-hidden flex flex-col font-sans relative">
       <TopNavbar
-        onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
+        onToggleDebug={() => {
+          const newState = !isDebugOpen;
+          setIsDebugOpen(newState);
+          addToast(`Debug console ${newState ? 'opened' : 'closed'}`, 'info');
+        }}
         onOpenSettings={() => setIsSettingsOpen(true)}
         isDebugOpen={isDebugOpen}
       />

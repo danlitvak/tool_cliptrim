@@ -54,7 +54,7 @@ function Toast({ toast, removeToast }: { toast: ToastMessage; removeToast: (id: 
     };
 
     return (
-        <div className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded border shadow-lg max-w-sm w-full bg-[#252526] border-[#3d3d3d] transition-all duration-300 ${isExiting ? 'translate-x-[120%] opacity-0' : 'animate-slide-in'
+        <div className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded border shadow-lg max-w-sm w-full bg-[#252526] border-[#3d3d3d] ${isExiting ? 'animate-slide-out' : 'animate-slide-in'
             }`}>
             {getIcon()}
             <p className="text-sm font-sans text-zinc-300 flex-1">{toast.message}</p>

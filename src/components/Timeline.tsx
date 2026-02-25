@@ -156,14 +156,22 @@ export function Timeline({
                         onSeek(percent * durationMs);
                     }}
                 >
-                    {/* Time Ticks Background (visual only) */}
-                    <div className="absolute inset-x-0 top-0 h-4 border-b border-[#3d3d3d] pointer-events-none opacity-50"
-                        style={{
-                            backgroundImage: 'linear-gradient(to right, #3d3d3d 1px, transparent 1px)',
-                            backgroundSize: `${10 * zoomLevel}% 100%`
-                        }}
-                    />
-
+                    {/* Time Ticks Background (visual only) & Labels */}
+                    <div className="absolute inset-0 pointer-events-none z-10 flex">
+                        {durationMs > 0 && Array.from({ length: 10 * zoomLevel }).map((_, i) => {
+                            const timeMs = (durationMs / (10 * zoomLevel)) * i;
+                            const sec = timeMs / 1000;
+                            // Format cleanly based on decimal necessity
+                            const label = sec % 1 === 0 ? sec.toFixed(0) : sec.toFixed(2);
+                            return (
+                                <div key={i} className="flex-1 border-l border-[#3d3d3d]/50 h-full relative box-border">
+                                    <span className="absolute left-1 top-0.5 text-[10px] text-zinc-500/80 font-mono select-none">
+                                        {label}s
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
                     {/* Segments Layer */}
                     {segments.map((seg) => (
                         <div

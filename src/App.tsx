@@ -46,6 +46,7 @@ export function App() {
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsChanged, setSettingsChanged] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('clipTrimSettings');
     if (!saved) return defaultSettings;
@@ -59,6 +60,7 @@ export function App() {
 
   const handleSettingsChange = (newSettings: AppSettings) => {
     setSettings(newSettings);
+    setSettingsChanged(true);
     localStorage.setItem('clipTrimSettings', JSON.stringify(newSettings));
   };
 
@@ -387,7 +389,13 @@ export function App() {
 
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => {
+          setIsSettingsOpen(false);
+          if (settingsChanged) {
+            addToast("Preferences saved", "success");
+            setSettingsChanged(false);
+          }
+        }}
         settings={settings}
         onSettingsChange={handleSettingsChange}
       />

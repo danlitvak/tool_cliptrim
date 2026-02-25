@@ -110,7 +110,14 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div className="bg-[#1e1e1e] border border-[#2d2d2d] rounded-none shadow-2xl w-full max-w-4xl flex flex-col h-[75vh] min-h-[500px] max-h-[800px] animate-in fade-in zoom-in duration-200">
 
                 {/* Modal Header */}

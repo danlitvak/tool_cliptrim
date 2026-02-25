@@ -111,38 +111,40 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-[#1e1e1e] border border-[#2d2d2d] rounded-lg shadow-2xl p-6 w-full max-w-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between mb-6 shrink-0">
-                    <div className="flex items-center gap-2 text-zinc-100">
+            <div className="bg-[#1e1e1e] border border-[#2d2d2d] rounded-none shadow-2xl w-full max-w-4xl flex flex-col h-[75vh] min-h-[500px] max-h-[800px] animate-in fade-in zoom-in duration-200">
+
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-5 shrink-0 bg-[#252526] border-b border-[#2d2d2d]">
+                    <div className="flex items-center gap-3 text-zinc-100">
                         <Settings2 className="w-5 h-5 text-zinc-400" />
-                        <h2 className="text-xl font-bold">Preferences</h2>
+                        <h2 className="text-lg font-medium">Preferences</h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-[#2d2d2d] rounded text-zinc-400 hover:text-white transition-colors"
+                        className="p-1.5 hover:bg-[#333333] rounded-none text-zinc-400 hover:text-white transition-colors"
                         title="Close Settings"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="flex flex-1 overflow-hidden mt-4 border-t border-[#2d2d2d] pt-4 min-h-[50vh]">
+                <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar Tabs */}
-                    <div className="w-48 shrink-0 flex flex-col gap-1 pr-4 border-r border-[#2d2d2d] overflow-y-auto">
+                    <div className="w-56 shrink-0 flex flex-col border-r border-[#2d2d2d] bg-[#252526] py-3">
                         <button
                             onClick={() => setActiveTab('General')}
-                            className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors ${activeTab === 'General'
-                                ? 'bg-[#37373d] text-white'
-                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2d2e]'
+                            className={`w-full text-left px-6 py-2.5 text-sm transition-colors border-l-2 ${activeTab === 'General'
+                                ? 'border-[#007fd4] bg-[#37373d] text-white'
+                                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2d2e]'
                                 }`}
                         >
                             General
                         </button>
                         <button
                             onClick={() => setActiveTab('Keyboard')}
-                            className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors ${activeTab === 'Keyboard'
-                                ? 'bg-[#37373d] text-white'
-                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2d2e]'
+                            className={`w-full text-left px-6 py-2.5 text-sm transition-colors border-l-2 ${activeTab === 'Keyboard'
+                                ? 'border-[#007fd4] bg-[#37373d] text-white'
+                                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2d2e]'
                                 }`}
                         >
                             Keyboard Shortcuts
@@ -150,78 +152,85 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 pl-6 overflow-y-auto custom-scrollbar pr-2">
-                        {activeTab === 'General' && (
-                            <div className="max-w-xl space-y-6 pb-8">
-                                <h3 className="text-xl font-semibold text-zinc-100 mb-6">General Settings</h3>
+                    <div className="flex-1 flex flex-col overflow-hidden relative bg-[#1e1e1e]">
+                        {/* Section Header */}
+                        <div className="shrink-0 px-8 py-6 border-b border-[#2d2d2d] bg-[#1e1e1e] z-10">
+                            <h3 className="text-xl font-medium text-zinc-100">
+                                {activeTab === 'General' ? 'General Settings' : 'Keyboard Shortcuts'}
+                            </h3>
+                        </div>
 
-                                {/* Setting Item */}
-                                <div className="flex flex-col gap-1 border-b border-[#2d2d2d] pb-5">
-                                    <h4 className="text-zinc-200 text-sm font-medium">Keyboard Scrubbing Duration</h4>
-                                    <span className="text-xs text-zinc-500 mb-3">
-                                        The amount of time (in seconds) the video will skip when using the Left or Right arrow keys.
-                                    </span>
-                                    <input
-                                        type="number"
-                                        name="scrubDuration"
-                                        value={settings.scrubDuration}
-                                        onChange={handleChange}
-                                        step="0.5"
-                                        min="0.5"
-                                        max="10"
-                                        className="w-32 bg-[#3c3c3c] border border-transparent hover:bg-[#464646] rounded px-3 py-1.5 text-zinc-200 text-sm focus:outline-none focus:border-[#007fd4] transition-colors"
-                                    />
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
+                            {activeTab === 'General' && (
+                                <div className="max-w-xl space-y-8">
+                                    {/* Setting Item */}
+                                    <div className="flex flex-col gap-2">
+                                        <h4 className="text-zinc-200 text-sm font-medium">Keyboard Scrubbing Duration</h4>
+                                        <span className="text-xs text-zinc-500 mb-2">
+                                            The amount of time (in seconds) the video will skip when using the Left or Right arrow keys.
+                                        </span>
+                                        <input
+                                            type="number"
+                                            name="scrubDuration"
+                                            value={settings.scrubDuration}
+                                            onChange={handleChange}
+                                            step="0.5"
+                                            min="0.5"
+                                            max="10"
+                                            className="w-32 bg-[#3c3c3c] border border-transparent hover:bg-[#464646] rounded-none px-3 py-1.5 text-zinc-200 text-sm focus:outline-none focus:border-[#007fd4] transition-colors"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {activeTab === 'Keyboard' && (
-                            <div className="max-w-2xl space-y-6 pb-8">
-                                <h3 className="text-xl font-semibold text-zinc-100 mb-6">Keyboard Shortcuts</h3>
-
-                                <div className="flex flex-col font-sans">
-                                    {(Object.entries({
-                                        'playPause': 'Play / Pause',
-                                        'setIn': 'Set IN Marker',
-                                        'setOut': 'Set OUT Marker',
-                                        'addSegment': 'Add Segment',
-                                        'deleteSelected': 'Delete Selected Segment',
-                                        'export': 'Export Segments',
-                                        'nextClip': 'Next Clip',
-                                        'prevClip': 'Previous Clip',
-                                        'scrubForward': 'Scrub Forward',
-                                        'scrubBackward': 'Scrub Backward',
-                                        'stepForward': 'Step Frame Forward',
-                                        'stepBackward': 'Step Frame Backward',
-                                        'speedUp': 'Increase Speed',
-                                        'speedDown': 'Decrease Speed',
-                                    }) as [keyof Keybinds, string][]).map(([action, label]) => (
-                                        <div key={action} className="flex items-center justify-between border-b border-[#2d2d2d] py-3 hover:bg-[#2a2d2e]/50 px-2 -mx-2 rounded transition-colors group">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-zinc-200">{label}</span>
-                                                <span className="text-[11px] text-zinc-500 font-mono mt-0.5">clipTrim.action.{action.toLowerCase()}</span>
+                            {activeTab === 'Keyboard' && (
+                                <div className="max-w-3xl space-y-2">
+                                    <div className="flex flex-col font-sans">
+                                        {(Object.entries({
+                                            'playPause': 'Play / Pause',
+                                            'setIn': 'Set IN Marker',
+                                            'setOut': 'Set OUT Marker',
+                                            'addSegment': 'Add Segment',
+                                            'deleteSelected': 'Delete Selected Segment',
+                                            'export': 'Export Segments',
+                                            'nextClip': 'Next Clip',
+                                            'prevClip': 'Previous Clip',
+                                            'scrubForward': 'Scrub Forward',
+                                            'scrubBackward': 'Scrub Backward',
+                                            'stepForward': 'Step Frame Forward',
+                                            'stepBackward': 'Step Frame Backward',
+                                            'speedUp': 'Increase Speed',
+                                            'speedDown': 'Decrease Speed',
+                                        }) as [keyof Keybinds, string][]).map(([action, label]) => (
+                                            <div key={action} className="flex items-center justify-between border-b border-[#2d2d2d]/50 py-3 hover:bg-[#2a2d2e]/30 px-3 -mx-3 transition-colors group">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-zinc-200">{label}</span>
+                                                    <span className="text-[11px] text-zinc-500 font-mono mt-1">clipTrim.action.{action.toLowerCase()}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setEditingKeyAction(action as keyof Keybinds)}
+                                                    className={`px-4 py-1.5 rounded-none text-xs font-mono min-w-[120px] text-center border transition-colors ${editingKeyAction === action
+                                                        ? 'bg-[#007fd4]/20 border-[#007fd4] text-[#007fd4] animate-pulse'
+                                                        : 'bg-[#3c3c3c] border-transparent text-zinc-200 group-hover:bg-[#464646] hover:!border-[#007fd4]'
+                                                        }`}
+                                                >
+                                                    {editingKeyAction === action ? 'Press key...' : formatKey(settings.keybinds[action as keyof Keybinds])}
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() => setEditingKeyAction(action)}
-                                                className={`px-3 py-1.5 rounded text-xs font-mono min-w-[100px] text-center border transition-colors ${editingKeyAction === action
-                                                    ? 'bg-[#007fd4]/20 border-[#007fd4] text-[#007fd4] animate-pulse'
-                                                    : 'bg-[#3c3c3c] border-transparent text-zinc-200 group-hover:bg-[#464646] hover:!border-[#007fd4]'
-                                                    }`}
-                                            >
-                                                {editingKeyAction === action ? 'Press key...' : formatKey(settings.keybinds[action])}
-                                            </button>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="mt-4 flex justify-end shrink-0 pt-4 border-t border-[#2d2d2d]">
+                {/* Footer Component */}
+                <div className="flex items-center justify-end px-6 py-4 shrink-0 bg-[#252526] border-t border-[#2d2d2d]">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-[#0e639c] hover:bg-[#1177bb] text-white font-medium rounded shadow transition-colors"
+                        className="px-6 py-2 bg-[#0e639c] hover:bg-[#1177bb] text-white text-sm font-medium rounded-none transition-colors"
                     >
                         Done
                     </button>
